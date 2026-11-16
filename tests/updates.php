@@ -17,9 +17,9 @@ check( 'https://github.com/paulommaeda/portal-rh/releases/download/v1.6.3/portal
 check( 'portal-rh' === $update['slug'], 'Incorrect update slug.' );
 check( 'https://github.com/paulommaeda/portal-rh' === $update['id'], 'Incorrect update identity.' );
 check( 3600 === $GLOBALS['expiration']['portal_rh_github_update'], 'Successful cache duration changed.' );
-$requests = $GLOBALS['requests'];
+$requests_before = $GLOBALS['requests'];
 portal_rh_verificar_atualizacao( false, array(), $plugin, array() );
-check( $requests === $GLOBALS['requests'], 'Cache did not prevent a duplicate request.' );
+check( $requests_before === $GLOBALS['requests'], 'Cache did not prevent a duplicate request.' );
 
 $info = portal_rh_detalhes_atualizacao( false, 'plugin_information', (object) array( 'slug' => 'portal-rh' ) );
 check( '1.6.3' === $info->version && $update['package'] === $info->download_link, 'Plugin details differ from update.' );
@@ -29,11 +29,11 @@ check( 'existing' === portal_rh_detalhes_atualizacao( 'existing', 'query_plugins
 
 $_GET['force-check'] = '1';
 portal_rh_obter_atualizacao();
-check( $requests + 1 === $GLOBALS['requests'], 'Manual check did not bypass cache.' );
+check( $requests_before + 1 === $GLOBALS['requests'], 'Manual check did not bypass cache.' );
 $GLOBALS['can_update'] = false;
-$requests = $GLOBALS['requests'];
+$requests_before = $GLOBALS['requests'];
 portal_rh_obter_atualizacao();
-check( $requests === $GLOBALS['requests'], 'Unauthorized manual check bypassed cache.' );
+check( $requests_before === $GLOBALS['requests'], 'Unauthorized manual check bypassed cache.' );
 unset( $_GET['force-check'] );
 $GLOBALS['can_update'] = true;
 
@@ -49,9 +49,9 @@ foreach ( array(
     $GLOBALS['remote'] = $response;
     check( false === portal_rh_obter_atualizacao(), 'Invalid response was accepted.' );
     check( 300 === $GLOBALS['expiration']['portal_rh_github_update'], 'Failure cache duration changed.' );
-    $requests = $GLOBALS['requests'];
+    $requests_before = $GLOBALS['requests'];
     check( false === portal_rh_obter_atualizacao(), 'Cached failure was accepted.' );
-    check( $requests === $GLOBALS['requests'], 'Failure cache did not prevent repeated requests.' );
+    check( $requests_before === $GLOBALS['requests'], 'Failure cache did not prevent repeated requests.' );
     check( 'existing' === portal_rh_verificar_atualizacao( 'existing', array(), $plugin, array() ), 'HTTP failure replaced another updater response.' );
 }
 
