@@ -46,18 +46,19 @@ function portal_rh_shortcode_meus_holerites() {
     }
     $nome = get_user_meta( get_current_user_id(), 'first_name', true );
     $nome_normalizado = portal_rh_normalizar_nome( $nome );
+    $importados = portal_rh_importados_para_usuario( get_current_user_id() );
 
     $html = '<div style="font-family:\'Nunito\',sans-serif;max-width:800px;margin:20px auto;">';
     $html .= '<h2 style="color:#5e4c73;font-weight:800;font-size:20px;margin-bottom:15px;">Meus Holerites</h2>';
 
-    if ( empty( $nome_normalizado ) ) {
+    if ( empty( $nome_normalizado ) && empty( $importados ) ) {
         $html .= '<p style="padding:15px;background:#fff;border-radius:12px;color:#555;box-shadow:0 4px 10px rgba(0,0,0,0.03);">Seu nome não está cadastrado no perfil.</p></div>';
         return $html;
     }
 
     $dir = portal_rh_get_holerites_dir();
     $arquivos_encontrados = array();
-    if ( is_dir( $dir ) ) {
+    if ( ! empty( $nome_normalizado ) && is_dir( $dir ) ) {
         $itens = scandir( $dir );
         foreach ( $itens as $item ) {
             if ( '.' === $item || '..' === $item || '.htaccess' === $item || 'index.php' === $item ) { continue; }
@@ -66,11 +67,14 @@ function portal_rh_shortcode_meus_holerites() {
         }
     }
 
-    if ( empty( $arquivos_encontrados ) ) {
+    if ( empty( $arquivos_encontrados ) && empty( $importados ) ) {
         $html .= '<p style="padding:15px;background:#fff;border-radius:12px;color:#555;box-shadow:0 4px 10px rgba(0,0,0,0.03);">Nenhum holerite disponível.</p>';
     } else {
         rsort( $arquivos_encontrados );
         $html .= '<ul style="list-style:none;padding:0;margin:0;display:grid;gap:10px;">';
+        foreach ( $importados as $registro ) {
+            $html .= portal_rh_item_importado_html( $registro );
+        }
         foreach ( $arquivos_encontrados as $arq ) {
             $url_download = portal_rh_get_download_url( $arq );
             $html .= '<li style="display:flex;align-items:center;justify-content:space-between;padding:15px;background:#fff;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,0.03);border-left:4px solid #5e4c73;">';

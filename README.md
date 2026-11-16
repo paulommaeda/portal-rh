@@ -1,53 +1,56 @@
 # Portal de RH — Holerites e Avisos
 
-Versão **1.6.2**. O arquivo original foi separado em módulos e templates, mantendo os nomes das funções, os shortcodes, os menus, as URLs, o HTML, o CSS, o JavaScript e as regras da versão 1.6.1.
+Versão **1.7.0**. Holerites, avisos e navegação inferior, com importação de um PDF único e atualização pelo painel do WordPress.
 
-## Organização dos arquivos
+## Importar PDF único
 
-| Caminho | Responsabilidade |
-| --- | --- |
-| `portal-rh.php` | Cabeçalho e carregamento do plugin |
-| `includes/avisos.php` | CPT, filtros e seleção das telas de avisos |
-| `includes/holerites.php` | Diretório, nomes e download dos holerites |
-| `includes/shortcodes.php` | `[lista_avisos]` e `[meus_holerites]` |
-| `includes/navegacao.php` | Navegação inferior e seus hooks |
-| `includes/atualizacoes.php` | Integração das atualizações com o GitHub |
-| `admin/holerites.php` | Upload, listagem e exclusão de holerites |
-| `templates/` | HTML, CSS e JavaScript extraídos das funções originais |
-| `updates.json` | Metadados incluídos em cada release estável |
+1. Acesse **Holerites (RH) → Importar PDF único** e selecione a folha completa.
+2. A competência do lote é opcional; quando preenchida, será aplicada a todas as páginas.
+3. Clique em **Identificar e separar**.
+4. Abra a prévia e confira nome, competência e conta do funcionário. Corrija os campos pendentes. Nomes diferentes do cadastro e homônimos exigem confirmação do vínculo manual.
+5. Selecione as páginas, confirme os destinatários e clique em **Publicar holerites selecionados**.
 
-As telas são incluídas apenas quando utilizadas. O módulo administrativo é carregado somente no painel. A separação mantém os estilos na mesma posição e não altera a ordem de aplicação do CSS.
+Padrão: **`DANIEL-LIMA-CUNHA_MARCO_DE_2026.pdf`**. Páginas do mesmo funcionário e competência são reunidas em um PDF, na ordem original. O arquivo completo é lido no navegador; apenas os documentos separados são enviados ao publicar.
 
-## Instalação e primeira atualização
+O original pode ter até 100 MB e 1.000 páginas. Cada arquivo publicado deve respeitar o limite do servidor e ter no máximo 10 MB. Use PDF sem senha. Páginas com funcionários diferentes são bloqueadas; exporte a folha com um funcionário por página. Duas vias do mesmo funcionário podem permanecer na mesma página.
 
-Requisitos do atualizador: WordPress 5.8 ou superior e PHP 7.0 ou superior.
+## Gemini opcional
 
-1. Faça backup do plugin atual.
-2. Instale o ZIP completo em **Plugins → Adicionar plugin → Enviar plugin**. A pasta padrão é `wp-content/plugins/portal-rh/`, com `portal-rh.php` dentro dela.
-3. Se o WordPress reconhecer a instalação existente, escolha substituir pela versão enviada. Se a versão anterior estiver em outra pasta ou for um PHP avulso na raiz de `plugins`, desative-a antes de ativar esta versão, para evitar duas cópias do mesmo plugin.
+Em **Holerites (RH) → Gemini**, cadastre a chave da API e um modelo com entrada PDF e saída JSON estruturada. O padrão é `gemini-3.5-flash-lite`, configurável conforme sua conta. A constante `PORTAL_RH_GEMINI_API_KEY` em `wp-config.php` também é aceita.
 
-É necessário instalar esta versão completa uma vez, pois a versão original 1.6.1 não contém o atualizador. Os avisos continuam no banco do WordPress, e os holerites continuam em `uploads/holerites`.
+A leitura inicial usa o texto do PDF. Para páginas digitalizadas ou pendentes, autorize o envio e clique em **Identificar pendentes com Gemini**. Somente essas páginas são enviadas à API do Google. O uso segue os limites e a cobrança da sua conta. A chave fica no servidor, sem aparecer no JavaScript nem nas URLs. A resposta contém nomes e competência e passa pela mesma revisão. Também é possível preencher os campos manualmente pela prévia.
 
-## Atualizações pelo WordPress
+## Arquivos e acesso
 
-O WordPress consulta o `updates.json` da última release estável do GitHub. Quando houver uma versão superior à instalada, ela aparece em **Painel → Atualizações** e em **Plugins**. O ZIP de cada versão é baixado diretamente da respectiva release pública, com a pasta `portal-rh/`. Não é necessário token do GitHub no site.
+Os novos documentos aparecem no shortcode existente **`[meus_holerites]`**, com o mesmo botão de download. Cada registro pertence ao ID da conta, para isolar o acesso entre funcionários com nomes iguais. Uploads antigos continuam pelo mecanismo anterior.
 
-O resultado é guardado em cache por uma hora; falhas são guardadas por cinco minutos. **Painel → Atualizações → Verificar novamente** ignora esse cache. A preferência de atualizações automáticas é controlada pelo próprio WordPress.
+Os novos arquivos ficam em diretórios individuais com identificadores aleatórios em `uploads/holerites/importados/`. O portal verifica login, nonce e proprietário ou permissão administrativa, sem expor caminhos físicos. A pasta inclui bloqueios Apache/IIS e índice fechado.
 
-Para publicar uma próxima versão:
+A lista de importados no final da nova tela tem filtro por competência, download e exclusão. Arquivos do mesmo funcionário e competência não são sobrescritos; confira e exclua o anterior para substituí-lo. Um envio idêntico repetido não cria duplicidade. Uploads antigos continuam na tela **Holerites (RH)**.
 
-1. Altere o cabeçalho `Version` e a constante `PORTAL_RH_VERSION` em `portal-rh.php`.
-2. Altere `version` e `changelog` em `updates.json`, mantendo os requisitos coerentes com o código.
-3. Publique todos os arquivos da versão em um mesmo commit na branch `main`. O GitHub Actions executa os testes, cria a tag `vX.Y.Z` e publica a release com o ZIP e o `updates.json`. A versão só é anunciada ao WordPress depois da publicação completa dos dois arquivos.
+## Instalação e atualizações
 
-## Verificação
+WordPress 5.8+, PHP 7.0+ com Fileinfo e navegador atualizado. Instale o **ZIP da release**, que inclui as bibliotecas PDF. A pasta padrão é `wp-content/plugins/portal-rh/`. Faça backup antes de substituir. Se a versão anterior estiver em outra pasta ou for um PHP avulso, desative-a antes de ativar esta versão.
 
-Os testes comparam os tokens PHP, o HTML, o CSS e o JavaScript das 16 funções originais com a versão dividida. Também verificam o carregamento sem saída antecipada e os principais fluxos do atualizador, incluindo cache, falhas de rede, isolamento entre plugins e preservação do diretório de instalação.
+Quem usa a 1.6.2 pode atualizar em **Painel → Atualizações** ou **Plugins**. O manifesto da última release é consultado com cache de uma hora; **Verificar novamente** ignora esse cache. Atualização automática segue a preferência do WordPress.
+
+A tabela da importação é criada na ativação ou na primeira visita administrativa após atualizar. Possui índices por funcionário e competência. Administração e Gemini são carregados no painel; bibliotecas PDF, somente na importação.
+
+## Desenvolvimento
+
+O código permanece separado em `includes/`, `admin/`, `templates/` e `assets/`. O módulo `includes/holerites-importados.php` gerencia arquivos e autorização; `includes/gemini.php` integra a API; `assets/js/holerites-core.js` identifica e agrupa; `assets/js/importacao.js` conduz a revisão.
+
+O ZIP “Source code” contém o código-fonte. Execute `node scripts/build-pdf-assets.mjs` em ambiente com Node atualizado, rede, `tar` e `unzip` para preparar PDF.js 6.5.438 e pdf-lib 1.17.1. As bibliotecas são verificadas, acompanham licenças e são servidas pelo próprio site.
+
+Para uma nova versão, altere o cabeçalho `Version`, a constante `PORTAL_RH_VERSION` e `updates.json`, e publique em `main`. O GitHub Actions testa, prepara as dependências e publica a release com ZIP e manifesto.
 
 ```sh
 git show 3e80e256eb42e30fad826467ac9745d1abfeab28:portal-rh.php > /tmp/portal-rh-original.php
 php tests/regression.php /tmp/portal-rh-original.php
 php tests/updates.php
+php tests/importacao.php
+php tests/gemini.php
+node tests/importacao-core.cjs
 ```
 
-Os testes não substituem a homologação no WordPress do site.
+Os testes comparam as 15 funções originais preservadas e a saída do shortcode ampliado para arquivos antigos. Verificam nomes, competências, homônimos, autorização, nonce, duplicidade, falhas de gravação e Gemini simulado. O Chromium usa PDFs gerados para conferir leitura, agrupamento e isolamento dos documentos exportados. A API Gemini real e o layout específico da folha devem ser homologados com sua chave e seus documentos.

@@ -32,10 +32,32 @@ jobs:
           php tests/regression.php "$RUNNER_TEMP/portal-rh-original.php"
       - name: Verificar atualizador
         run: php tests/updates.php
+      - name: Verificar importação e permissões
+        run: php tests/importacao.php
+      - name: Verificar integração Gemini sem chamadas reais
+        run: php tests/gemini.php
+
+  pdf:
+    name: Separação de PDFs no navegador
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Preparar bibliotecas PDF locais
+        run: node scripts/build-pdf-assets.mjs
+      - name: Verificar reconhecimento e agrupamento
+        run: node tests/importacao-core.cjs
+      - name: Preparar navegador de teste
+        run: |
+          npm install --prefix .pdf-build/browser --no-package-lock --ignore-scripts --no-audit --no-fund @playwright/test@1.65.1
+          node .pdf-build/browser/node_modules/@playwright/test/cli.js install --with-deps chromium
+      - name: Verificar importação com PDFs de exemplo
+        env:
+          PRH_PLAYWRIGHT_PATH: ${{ github.workspace }}/.pdf-build/browser/node_modules/@playwright/test
+        run: node .pdf-build/browser/node_modules/@playwright/test/cli.js test
 
   release:
     name: Publicar ZIP instalável
-    needs: test
+    needs: [test, pdf]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-24.04
     permissions:
@@ -45,6 +67,8 @@ jobs:
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Incluir bibliotecas PDF no pacote
+        run: node scripts/build-pdf-assets.mjs
       - name: Empacotar e publicar versão
         env:
           GH_TOKEN: ${{ github.token }}
@@ -52,7 +76,7 @@ jobs:
           version=$(php -r 'echo json_decode(file_get_contents("updates.json"), true)["version"];')
           tag="v$version"
           zip="$RUNNER_TEMP/portal-rh-$version.zip"
-          git archive --format=zip --prefix=portal-rh/ --output="$zip" HEAD
+          python3 scripts/package-plugin.py "$zip"
           draft=$(gh release view "$tag" --json isDraft --jq .isDraft 2>/dev/null || true)
           if [ "$draft" = 'false' ]; then
             echo "A release $tag já foi publicada."

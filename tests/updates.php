@@ -3,7 +3,7 @@
 require __DIR__ . '/bootstrap.php';
 
 $manifest = json_decode( file_get_contents( dirname( __DIR__ ) . '/updates.json' ), true );
-$manifest['version'] = '1.6.3';
+$manifest['version'] = '99.0.0';
 $GLOBALS['remote'] = array( 'response' => array( 'code' => 200 ), 'body' => json_encode( $manifest ) );
 $plugin = plugin_basename( PORTAL_RH_FILE );
 
@@ -11,9 +11,9 @@ check( false === portal_rh_verificar_atualizacao( false, array(), 'other/plugin.
 check( 0 === $GLOBALS['requests'], 'Unrelated plugin triggered HTTP.' );
 
 $update = portal_rh_verificar_atualizacao( false, array(), $plugin, array() );
-check( '1.6.3' === $update['version'], 'New version was not detected.' );
+check( '99.0.0' === $update['version'], 'New version was not detected.' );
 check( version_compare( $update['version'], PORTAL_RH_VERSION, '>' ), 'New version is not greater than installed version.' );
-check( 'https://github.com/paulommaeda/portal-rh/releases/download/v1.6.3/portal-rh-1.6.3.zip' === $update['package'], 'Incorrect ZIP URL.' );
+check( 'https://github.com/paulommaeda/portal-rh/releases/download/v99.0.0/portal-rh-99.0.0.zip' === $update['package'], 'Incorrect ZIP URL.' );
 check( 'portal-rh' === $update['slug'], 'Incorrect update slug.' );
 check( 'https://github.com/paulommaeda/portal-rh' === $update['id'], 'Incorrect update identity.' );
 check( 3600 === $GLOBALS['expiration']['portal_rh_github_update'], 'Successful cache duration changed.' );
@@ -22,7 +22,7 @@ portal_rh_verificar_atualizacao( false, array(), $plugin, array() );
 check( $requests_before === $GLOBALS['requests'], 'Cache did not prevent a duplicate request.' );
 
 $info = portal_rh_detalhes_atualizacao( false, 'plugin_information', (object) array( 'slug' => 'portal-rh' ) );
-check( '1.6.3' === $info->version && $update['package'] === $info->download_link, 'Plugin details differ from update.' );
+check( '99.0.0' === $info->version && $update['package'] === $info->download_link, 'Plugin details differ from update.' );
 check( isset( $info->sections['description'], $info->sections['changelog'] ), 'Plugin details are incomplete.' );
 check( 'existing' === portal_rh_detalhes_atualizacao( 'existing', 'plugin_information', (object) array( 'slug' => 'other' ) ), 'Changed another plugin details.' );
 check( 'existing' === portal_rh_detalhes_atualizacao( 'existing', 'query_plugins', (object) array( 'slug' => 'portal-rh' ) ), 'Changed an unrelated API action.' );
@@ -41,7 +41,7 @@ foreach ( array(
     new WP_Error( 'network_failure' ),
     array( 'response' => array( 'code' => 404 ), 'body' => '' ),
     array( 'response' => array( 'code' => 200 ), 'body' => '{invalid-json' ),
-    array( 'response' => array( 'code' => 200 ), 'body' => '{"slug":"other","version":"1.6.3"}' ),
+    array( 'response' => array( 'code' => 200 ), 'body' => '{"slug":"other","version":"99.0.0"}' ),
     array( 'response' => array( 'code' => 200 ), 'body' => '{"slug":"portal-rh","version":[]}' ),
     array( 'response' => array( 'code' => 200 ), 'body' => '{"slug":"portal-rh","version":"invalid"}' ),
 ) as $response ) {
@@ -56,7 +56,7 @@ foreach ( array(
 }
 
 $GLOBALS['cache'] = array();
-$minimal = array( 'slug' => 'portal-rh', 'version' => '1.6.3', 'name' => array( 'invalid' ) );
+$minimal = array( 'slug' => 'portal-rh', 'version' => '99.0.0', 'name' => array( 'invalid' ) );
 $GLOBALS['remote'] = array( 'response' => array( 'code' => 200 ), 'body' => json_encode( $minimal ) );
 $minimal = portal_rh_obter_atualizacao();
 check( '' === $minimal['name'] && '' === $minimal['requires_php'], 'Optional metadata was not normalized.' );

@@ -1,9 +1,9 @@
 {
   "name": "Portal de RH - Holerites e Avisos",
   "slug": "portal-rh",
-  "version": "1.6.2",
+  "version": "1.7.0",
   "requires": "5.8",
   "requires_php": "7.0",
   "description": "Holerites, mural de avisos e navegação inferior do Portal de RH.",
-  "changelog": "<h4>1.6.2</h4><ul><li>Separação do arquivo original em módulos e templates, preservando telas, shortcodes e regras existentes.</li><li>Carregamento da administração somente no painel.</li><li>Atualizações do GitHub pela área de atualizações do WordPress.</li></ul>"
+  "changelog": "<h4>1.7.0</h4><ul><li>Importação de um PDF com todos os holerites, com identificação por texto e Gemini opcional para páginas pendentes.</li><li>Prévia, revisão de destinatários, agrupamento de páginas por funcionário e competência e nomes no padrão NOME-COMPLETO_MES_DE_ANO.pdf.</li><li>Publicação vinculada ao usuário, prevenção de duplicidade e gestão dos arquivos importados.</li><li>Preservação dos holerites antigos e da tela Meus Holerites.</li></ul><h4>1.6.2</h4><p>Separação em módulos e atualização pelo WordPress.</p>"
 }
