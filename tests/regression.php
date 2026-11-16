@@ -68,7 +68,7 @@ foreach ( array( 'includes/avisos.php', 'includes/holerites.php', 'includes/shor
     $separated = array_merge( $separated, function_tokens( $source ) );
 }
 
-check( 17 === count( $original ), 'Unexpected original function count.' );
+check( 16 === count( $original ), 'Unexpected original function count.' );
 check( count( $original ) === count( $separated ), 'An original function was added or removed.' );
 foreach ( $original as $name => $tokens ) {
     check( isset( $separated[ $name ] ), 'Missing function: ' . $name );
@@ -93,4 +93,4 @@ check( PORTAL_RH_VERSION === trim( $version[1] ), 'Header and constant versions 
 check( PORTAL_RH_VERSION === $manifest['version'], 'Manifest version differs from plugin version.' );
 check( false !== strpos( $main, 'Update URI: https://github.com/paulommaeda/portal-rh' ), 'Update URI is missing.' );
 
-echo 'PASS: 17 original functions, markup, hooks and version metadata (' . $GLOBALS['checks'] . " checks).\n";
+echo 'PASS: 16 original functions, markup, hooks and version metadata (' . $GLOBALS['checks'] . " checks).\n";

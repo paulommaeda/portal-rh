@@ -42,7 +42,7 @@ Para publicar uma próxima versão:
 
 ## Verificação
 
-Os testes comparam os tokens PHP, o HTML, o CSS e o JavaScript das 17 funções originais com a versão dividida. Também verificam o carregamento sem saída antecipada e os principais fluxos do atualizador, incluindo cache, falhas de rede, isolamento entre plugins e preservação do diretório de instalação.
+Os testes comparam os tokens PHP, o HTML, o CSS e o JavaScript das 16 funções originais com a versão dividida. Também verificam o carregamento sem saída antecipada e os principais fluxos do atualizador, incluindo cache, falhas de rede, isolamento entre plugins e preservação do diretório de instalação.
 
 ```sh
 git show 3e80e256eb42e30fad826467ac9745d1abfeab28:portal-rh.php > /tmp/portal-rh-original.php
