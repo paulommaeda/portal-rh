@@ -1,0 +1,66 @@
+name: Validar e publicar plugin
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: PHP ${{ matrix.php }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['7.0', '8.1', '8.4']
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+      - name: Validar sintaxe PHP
+        run: find . -name '*.php' -not -path './.git/*' -print0 | xargs -0 -n1 php -l
+      - name: Comparar com o plugin original
+        run: |
+          git show 3e80e256eb42e30fad826467ac9745d1abfeab28:portal-rh.php > "$RUNNER_TEMP/portal-rh-original.php"
+          php tests/regression.php "$RUNNER_TEMP/portal-rh-original.php"
+      - name: Verificar atualizador
+        run: php tests/updates.php
+
+  release:
+    name: Publicar ZIP instalável
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    concurrency:
+      group: portal-rh-release
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Empacotar e publicar versão
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(php -r 'echo json_decode(file_get_contents("updates.json"), true)["version"];')
+          tag="v$version"
+          zip="$RUNNER_TEMP/portal-rh-$version.zip"
+          git archive --format=zip --prefix=portal-rh/ --output="$zip" HEAD
+          draft=$(gh release view "$tag" --json isDraft --jq .isDraft 2>/dev/null || true)
+          if [ "$draft" = 'false' ]; then
+            echo "A release $tag já foi publicada."
+            exit 0
+          fi
+          if [ "$draft" != 'true' ]; then
+            php -r '$d=json_decode(file_get_contents("updates.json"),true); echo strip_tags(str_replace(array("</li>", "</h4>"), "\n", $d["changelog"]));' > "$RUNNER_TEMP/release-notes.txt"
+            gh release create "$tag" --draft --target "$GITHUB_SHA" --title "Portal de RH $version" --notes-file "$RUNNER_TEMP/release-notes.txt"
+          fi
+          gh release upload "$tag" "$zip" updates.json --clobber
+          gh release edit "$tag" --draft=false --latest

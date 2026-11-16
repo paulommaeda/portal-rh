@@ -1,0 +1,9 @@
+{
+  "name": "Portal de RH - Holerites e Avisos",
+  "slug": "portal-rh",
+  "version": "1.6.2",
+  "requires": "5.8",
+  "requires_php": "7.0",
+  "description": "Holerites, mural de avisos e navegação inferior do Portal de RH.",
+  "changelog": "<h4>1.6.2</h4><ul><li>Separação do arquivo original em módulos e templates, preservando telas, shortcodes e regras existentes.</li><li>Carregamento da administração somente no painel.</li><li>Atualizações do GitHub pela área de atualizações do WordPress.</li></ul>"
+}
