@@ -1,4 +1,5 @@
 import io
+import re
 import shutil
 import subprocess
 import sys
@@ -18,6 +19,17 @@ archive = subprocess.run(['git', '-C', str(root), 'archive', '--format=tar', '--
 with tarfile.open(fileobj=io.BytesIO(archive)) as source:
     source.extractall(package, filter='data')
 shutil.copytree(vendor, package / 'portal-rh' / 'assets' / 'vendor', dirs_exist_ok=True)
+plugin = package / 'portal-rh'
+for php in plugin.rglob('*.php'):
+    for required in re.findall(r"require(?:_once)? PORTAL_RH_PATH \. '([^']+)'", php.read_text(encoding='utf-8')):
+        if not (plugin / required).is_file():
+            raise RuntimeError('Missing PHP module: ' + required)
+for forbidden in ('tests', '.github', 'scripts', '.pdf-build', '.git'):
+    if (plugin / forbidden).exists():
+        raise RuntimeError('Development directory in plugin package: ' + forbidden)
+for license in ('pdf-lib/LICENSE.md', 'pdfjs/LICENSE'):
+    if not (plugin / 'assets' / 'vendor' / license).is_file():
+        raise RuntimeError('Dependency license missing: ' + license)
 output.parent.mkdir(parents=True, exist_ok=True)
 with zipfile.ZipFile(output, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as bundle:
     for file in sorted(package.rglob('*')):

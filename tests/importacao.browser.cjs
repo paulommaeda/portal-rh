@@ -59,10 +59,11 @@ async function textOf(page, bytes) {
     return page.evaluate(async base64 => {
         const pdfjs = await import('/assets/vendor/pdfjs/build/pdf.js');
         pdfjs.GlobalWorkerOptions.workerSrc = '/assets/vendor/pdfjs/build/pdf.worker.js';
-        const pdf = await pdfjs.getDocument({data: Uint8Array.from(atob(base64), character => character.charCodeAt(0)), isEvalSupported: false, standardFontDataUrl: '/assets/vendor/pdfjs/standard_fonts/'}).promise;
+        const task = pdfjs.getDocument({data: Uint8Array.from(atob(base64), character => character.charCodeAt(0)), isEvalSupported: false, standardFontDataUrl: '/assets/vendor/pdfjs/standard_fonts/'});
+        const pdf = await task.promise;
         const result = [];
         for (let i = 1; i <= pdf.numPages; i++) result.push((await (await pdf.getPage(i)).getTextContent()).items.map(item => item.str).join(' '));
-        await pdf.destroy(); return result.join('\n');
+        await task.destroy(); return result.join('\n');
     }, bytes.toString('base64'));
 }
 
@@ -76,6 +77,9 @@ test('separa páginas reais, agrupa por funcionário e competência e usa Gemini
     await page.locator('#prh-pdf').setInputFiles({name: 'folha-completa.pdf', mimeType: 'application/pdf', buffer: file});
     await page.locator('#prh-analyze').click();
     await expect(page.locator('#prh-message')).toContainText('Leitura concluída', {timeout: 60000});
+    await expect(page.locator('#prh-rows tr')).toHaveCount(5);
+    await page.locator('#prh-analyze').click();
+    await expect(page.locator('#prh-message')).toContainText('Leitura concluída');
     await expect(page.locator('#prh-rows tr')).toHaveCount(5);
     await expect(page.locator('#prh-rows .prh-pick:checked')).toHaveCount(3);
     await expect(page.locator('#prh-rows tr').nth(4).locator('.prh-pick')).toBeDisabled();

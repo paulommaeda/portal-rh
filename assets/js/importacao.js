@@ -5,7 +5,7 @@
     const app = document.getElementById('prh-import-app');
     if (!config || !core || !app || !document.getElementById('prh-analyze')) return;
     const byId = id => document.getElementById(id);
-    const state = {rows: [], employees: [], source: null, reader: null, busy: false, urls: [], cache: new Map(), override: '', date: null};
+    const state = {rows: [], employees: [], source: null, reader: null, loading: null, busy: false, urls: [], cache: new Map(), override: '', date: null};
     function message(text, error = false) {
         byId('prh-message').textContent = text;
         byId('prh-message').dataset.error = String(error);
@@ -117,7 +117,7 @@
         const copied = await document.copyPages(state.source, pages.map(page => page - 1));
         copied.forEach(page => document.addPage(page));
         const bytes = await document.save({useObjectStreams: true});
-        while (state.cache.size >= 20) state.cache.delete(state.cache.keys().next().value);
+        while (state.cache.size && (state.cache.size >= 20 || [...state.cache.values()].reduce((sum, data) => sum + data.length, bytes.length) > 32 * 1024 * 1024)) state.cache.delete(state.cache.keys().next().value);
         state.cache.set(key, bytes);
         return bytes;
     }
@@ -141,8 +141,9 @@
             const bytes = new Uint8Array(buffer);
             state.source = await window.PDFLib.PDFDocument.load(bytes, {updateMetadata: false});
             pdfjs.GlobalWorkerOptions.workerSrc = config.workerUrl;
-            if (state.reader) await state.reader.destroy();
-            state.reader = await pdfjs.getDocument({data: bytes.slice(), isEvalSupported: false, enableXfa: false, cMapUrl: config.cMapUrl, cMapPacked: true, standardFontDataUrl: config.fontUrl, wasmUrl: config.wasmUrl}).promise;
+            if (state.loading) await state.loading.destroy();
+            state.loading = pdfjs.getDocument({data: bytes.slice(), isEvalSupported: false, enableXfa: false, cMapUrl: config.cMapUrl, cMapPacked: true, standardFontDataUrl: config.fontUrl, wasmUrl: config.wasmUrl});
+            state.reader = await state.loading.promise;
             const count = state.reader.numPages;
             if (!count || count > 1000 || count !== state.source.getPageCount()) throw new Error('Use um PDF válido de até 1.000 páginas, sem senha e com a mesma contagem de páginas na leitura.');
             progress.max = count;

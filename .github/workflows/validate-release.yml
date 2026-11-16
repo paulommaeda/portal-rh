@@ -54,6 +54,8 @@ jobs:
         env:
           PRH_PLAYWRIGHT_PATH: ${{ github.workspace }}/.pdf-build/browser/node_modules/@playwright/test
         run: node .pdf-build/browser/node_modules/@playwright/test/cli.js test
+      - name: Verificar pacote instalável
+        run: python3 scripts/package-plugin.py "$RUNNER_TEMP/portal-rh-test.zip"
 
   release:
     name: Publicar ZIP instalável

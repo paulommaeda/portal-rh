@@ -1,5 +1,5 @@
 import {createHash} from 'node:crypto';
-import {mkdir, readFile, writeFile, copyFile, cp, access} from 'node:fs/promises';
+import {mkdir, writeFile, copyFile, cp, access} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
@@ -10,6 +10,7 @@ const vendor = path.join(root, 'assets/vendor');
 const pdfjsVersion = '6.5.438';
 const pdfjsHash = 'fcbe9ba21d9911843e3502adc178a7f549a524a4055f887bedc942e5490c6ba1';
 const pdfLibVersion = '1.17.1';
+const pdfLibIntegrity = 'sha512-V/mpyJAoTsN4cnP31vc0wfNA1+p20evqqnap0KLoRUN0Yk/p3wN52DOEsL4oBFcLdb76hlpKPtzJIgo67j/XLw==';
 await mkdir(cache, {recursive: true});
 await mkdir(vendor, {recursive: true});
 
@@ -37,10 +38,8 @@ await copyFile(path.join(pdfjsExtract, 'build/pdf.worker.mjs'), path.join(pdfjsD
 for (const directory of ['cmaps', 'standard_fonts', 'wasm']) await copyIfPresent(path.join(pdfjsExtract, directory), path.join(pdfjsDestination, directory));
 await copyFile(path.join(pdfjsExtract, 'LICENSE'), path.join(pdfjsDestination, 'LICENSE'));
 
-const metadata = JSON.parse((await download('https://registry.npmjs.org/pdf-lib/' + pdfLibVersion)).toString('utf8'));
-if (metadata.version !== pdfLibVersion || !metadata.dist.integrity) throw new Error('Invalid pdf-lib release metadata.');
 const libArchive = await download('https://registry.npmjs.org/pdf-lib/-/pdf-lib-' + pdfLibVersion + '.tgz');
-const [algorithm, digest] = metadata.dist.integrity.split('-');
+const [algorithm, digest] = pdfLibIntegrity.split('-');
 if (algorithm !== 'sha512' || createHash(algorithm).update(libArchive).digest('base64') !== digest) throw new Error('pdf-lib integrity check failed.');
 const tarball = path.join(cache, 'pdf-lib.tgz');
 const libExtract = path.join(cache, 'pdf-lib');
@@ -51,6 +50,6 @@ const libDestination = path.join(vendor, 'pdf-lib');
 await mkdir(libDestination, {recursive: true});
 await copyFile(path.join(libExtract, 'package/dist/pdf-lib.min.js'), path.join(libDestination, 'pdf-lib.min.js'));
 await copyFile(path.join(libExtract, 'package/LICENSE.md'), path.join(libDestination, 'LICENSE.md'));
-const versions = {pdfjs: {version: pdfjsVersion, sha256: pdfjsHash, license: 'Apache-2.0'}, pdfLib: {version: pdfLibVersion, integrity: metadata.dist.integrity, license: 'MIT'}};
+const versions = {pdfjs: {version: pdfjsVersion, sha256: pdfjsHash, license: 'Apache-2.0'}, pdfLib: {version: pdfLibVersion, integrity: pdfLibIntegrity, license: 'MIT'}};
 await writeFile(path.join(vendor, 'versions.json'), JSON.stringify(versions, null, 2) + '\n');
 console.log(JSON.stringify(versions));
